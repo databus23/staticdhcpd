@@ -174,7 +174,11 @@ class WebService(threading.Thread):
 		self.daemon = True
 		
 		self._web_server = BaseHTTPServer.HTTPServer(
-		 (conf.WEB_IP, conf.WEB_PORT), _WebServer
+		 (
+		  '.'.join([str(int(o)) for o in conf.WEB_IP.split('.')]),
+		  int(conf.WEB_PORT)
+		 ),
+		 _WebServer
 		)
 		
 		src.logging.writeLog('Configured Web server')
