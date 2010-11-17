@@ -77,7 +77,7 @@ WEB_RELOAD_KEY = '5f4dcc3b5aa765d61d8327deb882cf99'
 
 #Database settings
 #######################################
-#Allowed values: MySQL, SQLite
+#Allowed values: MySQL, PostgreSQL, SQLite
 DATABASE_ENGINE = 'MySQL'
 
 #Controls whether DHCP data gleaned from database lookups should be cached until
@@ -99,6 +99,23 @@ MYSQL_HOST = None
 MYSQL_PORT = 3306
 #The number of threads that may read the database at once.
 MYSQL_MAXIMUM_CONNECTIONS = 4
+
+#POSTGRESQL_* values used only with 'PostgreSQL' engine.
+#The name of your database.
+POSTGRESQL_DATABASE = 'dhcp'
+#The name of a user with SELECT access.
+POSTGRESQL_USERNAME = 'dhcp_user'
+#The password of the user.
+POSTGRESQL_PASSWORD = 'dhcp_pass'
+#The host on which PostgreSQL is running. None for 'localhost'.
+POSTGRESQL_HOST = None
+#The port on which PostgreSQL is running; ignored when HOST is None.
+POSTGRESQL_PORT = 5432
+#The SSL mode to use; ignored when HOST is None.
+#http://www.postgresql.org/docs/9.0/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
+POSTGRESQL_SSLMODE = 'disabled'
+#The number of threads that may read the database at once.
+POSTGRESQL_MAXIMUM_CONNECTIONS = 4
 
 #SQLITE_* values used only with 'SQLite' engine.
 #The file that contains your SQLite database.

@@ -3,7 +3,7 @@ USE dhcp;
 
 CREATE TABLE subnets (
 	subnet CHAR(18) NOT NULL, -- A human-readable subnet-identifier, large enough to hold a CIDR mask.
-	serial SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- A means of allowing a subnet to be used, just in case you have two 192.168.1.0/24s.
+	serial SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- A means of allowing a subnet to be reused, just in case you have two 192.168.1.0/24s.
 	lease_time MEDIUMINT UNSIGNED NOT NULL, -- The number of seconds a "lease" is good for. This can be massive unless properties change often.
 	gateway CHAR(15), -- The IPv4 gateway to supply to clients; may be null.
 	subnet_mask CHAR(15), -- The IPv4 subnet mask to supply to clients; may be null.

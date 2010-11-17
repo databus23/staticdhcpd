@@ -1,6 +1,6 @@
 CREATE TABLE subnets (
 	subnet TEXT NOT NULL, -- A human-readable subnet-identifier, typically a CIDR mask.
-	serial INTEGER NOT NULL DEFAULT 0, -- A means of allowing a subnet to be used, just in case you have two 192.168.1.0/24s.
+	serial INTEGER NOT NULL DEFAULT 0, -- A means of allowing a subnet to be reused, just in case you have two 192.168.1.0/24s.
 	lease_time INTEGER NOT NULL, -- The number of seconds a "lease" is good for. This can be massive unless properties change often.
 	gateway TEXT, -- The IPv4 gateway to supply to clients; may be null.
 	subnet_mask TEXT, -- The IPv4 subnet mask to supply to clients; may be null.
