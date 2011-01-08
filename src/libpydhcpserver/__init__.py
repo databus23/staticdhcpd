@@ -26,4 +26,3 @@ Legal
  (C) Mathieu Ignacio, 2008 <mignacio@april.org>
 """
 VERSION = '1.1.0'
-

@@ -25,4 +25,3 @@ Legal
  (C) Neil Tallim, 2009 <red.hamsterx@gmail.com>
 """
 VERSION = '1.5.3'
-
