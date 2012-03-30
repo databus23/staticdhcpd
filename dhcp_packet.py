@@ -28,6 +28,7 @@ Legal
 import operator
 from struct import unpack
 from struct import pack
+import warnings
 
 from dhcp_constants import *
 from type_hwmac import hwmac
@@ -82,7 +83,15 @@ class DHCPPacket(object):
                 opt_first = position + 1
                 opt_id = self._packet_data[position]
                 opt_val = self._packet_data[opt_first + 1:opt_len + opt_first + 1]
-                self._options_data[DHCP_OPTIONS_REVERSE[opt_id]] = opt_val
+                try:
+                    self._options_data[DHCP_OPTIONS_REVERSE[opt_id]] = opt_val
+                except Exception, e:
+                    warnings.warn("Unable to assign '%(value)s' to '%(id)s': %(error)s" % {
+                     'value': opt_val,
+                     'id': opt_id,
+                     'error': str(e),
+                    })
+                    
                 if opt_id == 55: #Handle requested options.
                     self._requested_options = tuple(set(
                      [int(i) for i in opt_val] + [1, 3, 6, 15, 51, 53, 54, 58, 59]
@@ -293,7 +302,7 @@ class DHCPPacket(object):
                 return False
                 
             #Process normal options.
-            dhcp_field_specs = DHCP_FIELDS_SPECS[dhcp_field_type]
+            dhcp_field_specs = DHCP_FIELDS_SPECS.get(dhcp_field_type)
             if dhcp_field_specs:
                 (fixed_length, minimum_length, multiple) = dhcp_field_specs
                 length = len(value)
@@ -334,6 +343,19 @@ class DHCPPacket(object):
         """
         return self._packet_data[236:240] == MAGIC_COOKIE
         
+    def _getDHCPMessageType(self):
+        """
+        Returns the DHCP message-type of this packet.
+        
+        @rtype: int
+        @return: The DHCP message type of this packet or -1 if the
+            message-type is undefined.
+        """
+        dhcp_message_type = self.getOption('dhcp_message_type')
+        if dhcp_message_type is None:
+            return -1
+        return dhcp_message_type[0]
+
     def isDHCPDeclinePacket(self):
         """
         Indicates whether this is a DECLINE packet.
@@ -341,7 +363,7 @@ class DHCPPacket(object):
         @rtype: bool
         @return: True if this is a DECLINE packet.
         """
-        return self.getOption('dhcp_message_type')[0] == 4
+        return self._getDHCPMessageType() == 4
         
     def isDHCPDiscoverPacket(self):
         """
@@ -350,7 +372,7 @@ class DHCPPacket(object):
         @rtype: bool
         @return: True if this is a DISCOVER packet.
         """
-        return self.getOption('dhcp_message_type')[0] == 1
+        return self._getDHCPMessageType() == 1
         
     def isDHCPInformPacket(self):
         """
@@ -359,7 +381,7 @@ class DHCPPacket(object):
         @rtype: bool
         @return: True if this is an INFORM packet.
         """
-        return self.getOption('dhcp_message_type')[0] == 8
+        return self._getDHCPMessageType() == 8
         
     def isDHCPLeaseQueryPacket(self):
         """
@@ -368,7 +390,7 @@ class DHCPPacket(object):
         @rtype: bool
         @return: True if this is a LEASEQUERY packet.
         """
-        return self.getOption('dhcp_message_type')[0] == 10
+        return self._getDHCPMessageType() == 10
         
     def isDHCPReleasePacket(self):
         """
@@ -377,7 +399,7 @@ class DHCPPacket(object):
         @rtype: bool
         @return: True if this is a RELEASE packet.
         """
-        return self.getOption('dhcp_message_type')[0] == 7
+        return self._getDHCPMessageType() == 7
         
     def isDHCPRequestPacket(self):
         """
@@ -386,8 +408,45 @@ class DHCPPacket(object):
         @rtype: bool
         @return: True if this is a REQUEST packet.
         """
-        return self.getOption('dhcp_message_type')[0] == 3
+        return self._getDHCPMessageType() == 3
 
+    def extractPXEOptions(self):
+        """
+        Strips out PXE-specific options from the packet, returning them
+        separately.
+        
+        This function is good for scrubbing information that needs to be sent
+        monodirectionally from the client.
+
+        @rtype: tuple(3)
+        @return: A triple containing, in order, option 93 (client_system) as
+            a sequence of ints, option 94 (client_ndi) as a sequence of three
+            bytes, and option 97 (uuid_guid) as digested data:
+            (type:byte, data:[byte]).
+            Any unset options are presented as None.
+        """
+        opt_93 = self.getOption("client_system")
+        opt_94 = self.getOption("client_ndi")
+        opt_97 = self.getOption("uuid_guid")
+
+        if opt_93:
+            value = []
+            for i in xrange(0, len(opt_93), 2):
+                value.append(opt_93[i] * 256 + opt_93[i + 1])
+            opt_93 = value
+            
+        if opt_94:
+            opt_94 = tuple(opt_94)
+            
+        if opt_97:
+            opt_97 = (opt_97[0], opt_97[1:])
+            
+        self.deleteOption("client_system")
+        self.deleteOption("client_ndi")
+        self.deleteOption("uuid_guid")
+        
+        return (opt_93, opt_94, opt_97)
+        
     def extractVendorOptions(self):
         """
         Strips out vendor-specific options from the packet, returning them
@@ -578,7 +637,7 @@ class DHCPPacket(object):
         output = ['#Header fields']
         op = self._packet_data[DHCP_FIELDS['op'][0]:DHCP_FIELDS['op'][0] + DHCP_FIELDS['op'][1]]
         output.append("op: %(type)s" % {
-         'type': DHCP_FIELDS_NAME['op'][op[0]],
+         'type': DHCP_FIELDS_NAMES['op'][op[0]],
         })
         
         for opt in (
