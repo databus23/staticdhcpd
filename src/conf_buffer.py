@@ -120,8 +120,18 @@ for (key, value) in _defaults.iteritems():
         globals()[key] = value
 del _defaults
 
-init = conf.init
-loadDHCPPacket = conf.loadDHCPPacket
+if hasattr(conf, 'init'):
+    init = conf.init
+else:
+    init = lambda : None
+if hasattr(conf, 'loadDHCPPacket'):
+    loadDHCPPacket = conf.loadDHCPPacket
+else:
+    loadDHCPPacket = lambda *args, **kwargs : True
+if hasattr(conf, 'handleUnknownMAC'):
+    handleUnknownMAC = conf.handleUnknownMAC
+else:
+    handleUnknownMAC = lambda *args, **kwargs : None
 
 #Inject namespace elements into conf.
 ##############################################################################

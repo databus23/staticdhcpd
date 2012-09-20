@@ -152,7 +152,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
                 
             if '.'.join(map(str, packet.getOption("server_identifier"))) == self._server_address: #Rejected!
                 ip = '.'.join(map(str, packet.getOption("requested_ip_address")))
-                result = self._sql_broker.lookupMAC(mac)
+                result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                 if result and result[0] == ip: #Known client.
                     src.logging.writeLog('DHCPDECLINE from %(mac)s for %(ip)s on (%(subnet)s, %(serial)i)' % {
                      'ip': ip,
@@ -205,7 +205,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
             })
             
             try:
-                result = self._sql_broker.lookupMAC(mac)
+                result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                 if result:
                     rapid_commit = not packet.getOption('rapid_commit') is None
                     if rapid_commit:
@@ -296,7 +296,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
             })
             
             try:
-                result = self._sql_broker.lookupMAC(mac)
+                result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                 if result:
                     packet.transformToDHCPLeaseActivePacket()
                     if packet.setOption('yiaddr', ipToList(result[0])):
@@ -370,7 +370,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
                      'mac': mac,
                     })
                     try:
-                        result = self._sql_broker.lookupMAC(mac)
+                        result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                         if result and (not ip or result[0] == s_ip):
                             packet.transformToDHCPAckPacket()
                             pxe_options = packet.extractPXEOptions()
@@ -400,7 +400,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
                  'mac': mac,
                 })
                 try:
-                    result = self._sql_broker.lookupMAC(mac)
+                    result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                     if result and result[0] == s_ip:
                         packet.transformToDHCPAckPacket()
                         pxe_options = packet.extractPXEOptions()
@@ -439,7 +439,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
                         })
                         
                     try:
-                        result = self._sql_broker.lookupMAC(mac)
+                        result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                         if result and result[0] == s_ciaddr:
                             packet.transformToDHCPAckPacket()
                             pxe_options = packet.extractPXEOptions()
@@ -533,7 +533,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
                 return
                 
             try:
-                result = self._sql_broker.lookupMAC(mac)
+                result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                 if result:
                     packet.transformToDHCPAckPacket()
                     pxe_options = packet.extractPXEOptions()
@@ -596,7 +596,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
                 
             if '.'.join(map(str, packet.getOption("server_identifier"))) == self._server_address: #Released!
                 ip = '.'.join(map(str, packet.getOption("ciaddr")))
-                result = self._sql_broker.lookupMAC(mac)
+                result = self._sql_broker.lookupMAC(mac) or conf.handleUnknownMAC(mac)
                 if result and result[0] == ip: #Known client.
                     src.logging.writeLog('DHCPRELEASE from %(mac)s for %(ip)s' % {
                      'ip': ip,
