@@ -199,7 +199,7 @@ class _PacketWrapper(object):
             })
             
             statistics.emit(statistics.Statistics(
-             self.source_address, self.mac, self._packet_type, time_taken, not self._discarded
+             self.source_address, self.mac, self._packet_type, time_taken, not self._discarded, self.pxe,
             ))
             
     def _extractInterestingFields(self):
@@ -793,7 +793,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
         @param mac: The MAC of the client for which this packet is destined.
         @type client_ip: basestring
         @param client_ip: The IP being assigned to the client.
-        
+            
         @rtype: int
         @return: The number of bytes transmitted.
         """
@@ -809,6 +809,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
             else: #Request directly from client, routed or otherwise.
                 ip = address[0]
                 if pxe:
+                    ip = _extractIPOrNone(packet, 'ciaddr') or ip
                     port = address[1] or self._client_port #BSD doesn't seem to preserve port information
                 else:
                     port = self._client_port
@@ -875,7 +876,7 @@ class _DHCPServer(libpydhcpserver.dhcp_network.DHCPNetwork):
         """
         (dhcp_received, source_address) = self._getNextDHCPPacket()
         if not dhcp_received and source_address:
-            statistics.emit(statistics.Statistics(source_address, None, None, 0.0, False))
+            statistics.emit(statistics.Statistics(source_address, None, None, 0.0, False, False))
             
     def tick(self):
         """

@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 """
-Integrates Atom feeds into the webservice module, allowing you to subscribe to
+Integrates an Atom feed into the webservice module, allowing you to subscribe to
 events of importance, without all the noise that often accompanies e-mail
 updates, especially when something fails on every single request, like someone
 pulling a cable they shouldn't have touched.
@@ -133,12 +133,16 @@ class _FeedHandler(logging.Handler):
         """
         Non-Handler method: Enumerates every tracked record, up to `limit`.
         """
+        events = []
         self.acquire()
         try:
-            return [_Event(record.msg, record.levelname, record.created, record.name, record.lineno, uid) for (record, uid) in self._records[:limit]]
+            for i in xrange(min(limit, len(self._records))):
+                (record, uid) = self._records[i]
+                events.append(_Event(record.msg, record.levelname, record.created, record.name, record.lineno, uid))
         finally:
             self.release()
-            
+        return events
+        
 def _format_title(element):
     """
     Formats the given `element`, returning a string suitable for display in a
@@ -157,32 +161,21 @@ def _feed_presenter(feed_type):
     """
     def decorator(f):
         def function(*args, **kwargs):
-            start_time = time.time()
-            _logger.debug("%(type)s feed being generated..." % {
-             'type': feed_type,
-             'time': time.time() - start_time,
-            })
             try:
-                result = f(start_time - MAX_AGE, *args, **kwargs)
+                return f(*args, **kwargs)
             except Exception:
                 _logger.error("Unable to render %(type)s feed:\n%(error)s" % {
                  'type': feed_type,
                  'error': traceback.format_exc(),
                 })
                 raise
-            else:
-                _logger.debug("%(type)s feed generated in %(time).3f seconds" % {
-                 'type': feed_type,
-                 'time': time.time() - start_time,
-                })
-                return result
         return function
     return decorator
     
 _ATOM_ID_FORMAT = 'urn:uuid:%(id)s'
 _FEED_ID = _ATOM_ID_FORMAT % {'id': FEED_ID}
 @_feed_presenter('Atom')
-def _present_atom(max_age, logger):
+def _present_atom(logger):
     """
     Assembles an Atom-compliant feed, drawing elements from `logger`.
     """
@@ -199,6 +192,7 @@ def _present_atom(max_age, logger):
     id.text = _FEED_ID
     
     global _ATOM_ID_FORMAT
+    max_age = time.time() - MAX_AGE
     for element in logger.enumerateRecords(MAX_EVENTS_FEED):
         if element.timestamp < max_age: #Anything after this is also too old
             break

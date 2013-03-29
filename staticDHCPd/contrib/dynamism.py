@@ -25,7 +25,7 @@ To use this module, add the following to conf.py's init() function:
      display_mode=callbacks.WEB_METHOD_TEMPLATE
     )
     #You could also make it a permanent dashboard fixture:
-    #callbacks.webAddDashboard('guest-0', 'leases',_dynamic_pool.show_leases_xhtml)
+    #callbacks.webAddDashboard('guest-0', 'leases', _dynamic_pool.show_leases_xhtml)
     #Add 'ordering=N', where N is a bias value, to change its position
     
     #And a CSV form, too, in case any automated processors need the data
@@ -63,9 +63,7 @@ Like staticDHCPd, this module under the GNU General Public License v3
 (C) Neil Tallim, 2013 <flan@uguu.ca>
 """
 import collections
-import csv
 import logging
-import StringIO
 import threading
 import time
 
@@ -259,9 +257,13 @@ class DynamicPool(object):
         if method == 'DISCOVER' or method.startswith('REQUEST:'):
             definition = self._allocate(mac, client_ip)
             if definition and self._discourage_renewals:
-                self._logger.debug("Setting T1 and T2 to match lease-time")
-                packet.setOption('renewal_time_value', longToList(definition.lease_time))
-                packet.setOption('rebinding_time_value', longToList(definition.lease_time))
+                target_time = int(definition.lease_time * 0.975)
+                self._logger.debug("Setting T1 and T2 to 97.5%% of lease-time=%(lease)i: %(target)i seconds" % {
+                 'lease': definition.lease_time,
+                 'target': target_time,
+                })
+                packet.setOption('renewal_time_value', longToList(target_time))
+                packet.setOption('rebinding_time_value', longToList(target_time))
             return definition
         if method == 'RELEASE' or method == 'DECLINE':
             return self._reclaim(mac, client_ip)
@@ -290,6 +292,9 @@ class DynamicPool(object):
         """
         Provides every lease in the system, as a CSV document.
         """
+        import csv
+        import StringIO
+        
         output = StringIO.StringIO()
         writer = csv.writer(output)
         writer.writerow(('ip', 'mac', 'expiration', 'last seen'))
@@ -316,7 +321,8 @@ class DynamicPool(object):
                 
             elements = []
             for (mac, (expiration, ip)) in sorted(self._map.iteritems(), key=(lambda element: element[1])):
-                elements.append("""<tr>
+                elements.append("""
+                <tr>
                     <td>%(ip)s</td>
                     <td>%(mac)s</td>
                     <td>%(expiration)s</td>
@@ -325,7 +331,8 @@ class DynamicPool(object):
                  'mac': mac,
                  'expiration': time.ctime(expiration),
                 })
-            return """<table class="element">
+            return """
+            <table class="element">
                 <thead>
                     <tr>
                         <th>IP</th>
@@ -335,7 +342,7 @@ class DynamicPool(object):
                 </thead>
                 <tfoot>
                     <tr>
-                        <td colspan="3" style="text-align: center;">%(count)i IPs available</td>
+                        <td colspan="3">%(count)i IPs available</td>
                     </tr>
                 </tfoot>
                 <tbody>
