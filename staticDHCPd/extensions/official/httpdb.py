@@ -125,9 +125,9 @@ class HTTPDatabase(Database, _HTTPLogic):
     def __init__(self):
         _HTTPLogic.__init__(self)
         
-    def lookupMAC(self):
-        return self._lookupMAC()
         
+    def lookupMAC(self, mac):
+        return self._lookupMAC(mac)
 class HTTPCachingDatabase(CachingDatabase, _HTTPLogic):
     def __init__(self):
         #CachingDatabase.__init__(self, concurrency_limit=20) #The default limit is 2147483647
