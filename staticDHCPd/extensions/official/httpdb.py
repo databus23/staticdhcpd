@@ -67,7 +67,7 @@ class _HTTPLogic(object):
          'mac': str(mac),
         })
         try:
-            response = urllib.urlopen(request)
+            response = urllib2.urlopen(request)
             _logger.debug("MAC response received from '%(uri)s' for '%(mac)s'" % {
              'uri': self._URI,
              'mac': str(mac),
