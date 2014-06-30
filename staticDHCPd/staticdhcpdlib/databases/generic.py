@@ -92,7 +92,7 @@ class Definition(object):
         
         #Optional vlaues
         self.hostname = hostname and str(hostname)
-        self.gateway = gateway and IPv4(gateway)
+        self.gateway = gateway and [IPv4(gateway)]
         self.subnet_mask = subnet_mask and IPv4(subnet_mask)
         self.broadcast_address = broadcast_address and IPv4(broadcast_address)
         self.domain_name = domain_name and str(domain_name)
